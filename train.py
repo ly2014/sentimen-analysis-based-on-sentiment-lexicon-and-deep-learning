@@ -25,7 +25,7 @@ def load_data(filename):
     return rs_data
 
 
-max_len = 12
+max_len = 648
 stopwords = []
 sentiments = []
 sentivalue = {}
