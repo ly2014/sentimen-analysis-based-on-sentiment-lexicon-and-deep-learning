@@ -1,4 +1,5 @@
 import torch.utils.data
+import numpy as np
 
 
 class MyData(torch.utils.data.Dataset):
