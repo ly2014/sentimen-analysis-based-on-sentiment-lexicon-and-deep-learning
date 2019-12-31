@@ -1,5 +1,7 @@
 import jieba
 import numpy as np
+import collections
+import torch
 
 
 def process_sentiment_words():
@@ -36,24 +38,11 @@ def normalize_sentiment_words():
 
 
 def process_words_list():
-    stopwords = get_stopwords()
-    sentiment_dict = get_sentiment_dict()
-    sentences = []
+    sentences = get_data()
     words_list = []
-    with open('data/positive.txt', 'r', encoding='utf-8') as fp:
-        lines = fp.readlines()
-        for line in lines:
-            sentences.append(line.strip())
-    with open('data/negative.txt', 'r', encoding='utf-8') as fp:
-        lines = fp.readlines()
-        for line in lines:
-            sentences.append(line.strip())
-    jieba.load_userdict(sentiment_dict.keys())
     for sentence in sentences:
-        sentence = list(jieba.cut(sentence))
-        for word in sentence:
-            if '\u4e00' <= word <= '\u9fff' and word not in stopwords:
-                words_list.append(word)
+        words_list.extend(sentence)
+    words_list = list(set(words_list))
     with open('data/word_list.txt', 'w', encoding='utf-8') as fp:
         for word in words_list:
             fp.write(word + '\n')
@@ -106,3 +95,68 @@ def get_word_vectors():
     for i in range(len(word_list)):
         word2vec[word_list[i]] = vecs[i]
     return word2vec
+
+
+def get_weighted_word_vectors():
+    word2vec = get_word_vectors()
+    sentiment_dict = get_sentiment_dict()
+    for i in word2vec.keys():
+        if i in sentiment_dict.keys():
+            word2vec[i] = sentiment_dict[i] * word2vec[i]
+    return word2vec
+
+
+def get_data():
+    stopwords = get_stopwords()
+    sentiment_dict = get_sentiment_dict()
+    sentences = []
+    rs_sentences = []
+    with open('data/positive.txt', 'r', encoding='utf-8') as fp:
+        lines = fp.readlines()
+        for line in lines:
+            sentences.append(line.strip())
+    with open('data/negative.txt', 'r', encoding='utf-8') as fp:
+        lines = fp.readlines()
+        for line in lines:
+            sentences.append(line.strip())
+    jieba.load_userdict(sentiment_dict.keys())
+    for sentence in sentences:
+        sentence = list(jieba.cut(sentence))
+        split_sentence = []
+        for word in sentence:
+            if '\u4e00' <= word <= '\u9fff' and word not in stopwords:
+                split_sentence.append(word)
+        rs_sentences.append(split_sentence)
+    return rs_sentences
+
+
+def process_data(sentence_length, words_size, embed_size):
+    sentences = get_data()
+    frequency = collections.Counter()
+    for sentence in sentences:
+        for word in sentence:
+            frequency[word] += 1
+    word2index = dict()
+    for i, x in enumerate(frequency.most_common(words_size)):
+        word2index[x[0]] = i + 1
+    word2vec = get_weighted_word_vectors()
+    word_vectors = torch.zeros(words_size + 1, embed_size)
+    for k, v in word2index.items():
+        word_vectors[v, :] = torch.from_numpy(word2vec[k])
+    rs_sentences = []
+    for sentence in sentences:
+        sen = []
+        for word in sentence:
+            if word in word2index.keys():
+                sen.append(word2index[word])
+            else:
+                sen.append(0)
+        if len(sen) < sentence_length:
+            sen.extend([0 for _ in range(sentence_length - len(sen))])
+        else:
+            sen = sen[:sentence_length]
+        rs_sentences.append(sen)
+    label = [1 for _ in range(50000)]
+    label.extend([0 for _ in range(50000)])
+    label = np.array(label)
+    return rs_sentences, label, word_vectors

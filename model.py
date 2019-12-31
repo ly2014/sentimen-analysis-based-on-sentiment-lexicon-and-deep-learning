@@ -1,14 +1,12 @@
-import torch as t
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 
 class SLCABG(nn.Module):
-    def __init__(self, vocab_size, n_dim, sentence_length, word_vectors):
-        super(Net, self).__init__()
-        weight = torch.zeros(vocab_size + 1, n_dim)
-        weight[1:, :] = torch.from_numpy(word_vectors)
-        self.word_embeddings = nn.Embedding.from_pretrained(weight)
+    def __init__(self, n_dim, sentence_length, word_vectors):
+        super(SLCABG, self).__init__()
+        self.word_embeddings = nn.Embedding.from_pretrained(word_vectors)
         self.word_embeddings.weight.requires_grad = False
         self.convs = nn.ModuleList(
             [nn.Sequential(
@@ -29,7 +27,7 @@ class SLCABG(nn.Module):
         embed_x = self.word_embeddings(x)
         embed_x = embed_x.permute(0, 2, 1)
         out = [conv(embed_x) for conv in self.convs]
-        out = t.cat(out, 1)
+        out = torch.cat(out, 1)
         out = out.permute(0, 2, 1)
         out, _ = self.gru(out)
         u = torch.tanh(torch.matmul(out, self.weight_W))
