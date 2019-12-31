@@ -11,3 +11,4 @@ class MyData(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         return self.lb[index], np.array(self.dt[index])
+
