@@ -50,7 +50,7 @@ def process_words_list():
 
 def get_words_list():
     words_list = []
-    with open('data/word_list.txt', 'w', encoding='utf-8') as fp:
+    with open('data/word_list.txt', 'r', encoding='utf-8') as fp:
         lines = fp.readlines()
         for line in lines:
             words_list.append(line.strip())
@@ -59,7 +59,7 @@ def get_words_list():
 
 def get_stopwords():
     stopwords = []
-    with open('data/stop.txt', 'r', encoding='utf-8') as fp:
+    with open('data/stop_words.txt', 'r', encoding='utf-8') as fp:
         lines = fp.readlines()
         for line in lines:
             stopwords.append(line.strip())
@@ -72,7 +72,7 @@ def get_sentiment_dict():
         lines = fp.readlines()
         for line in lines:
             line = line.strip().split(',')
-            sentiment_dict[line[0]] = line[1]
+            sentiment_dict[line[0]] = float(line[1])
     return sentiment_dict
 
 
