@@ -22,7 +22,6 @@ class SLCABG(nn.Module):
         self.weight_W = nn.Parameter(torch.Tensor(128, 128))
         self.weight_proj = nn.Parameter(torch.Tensor(128, 1))
         self.fc = nn.Linear(128, 2)
-
         nn.init.uniform_(self.weight_W, -0.1, 0.1)
         nn.init.uniform_(self.weight_proj, -0.1, 0.1)
 
